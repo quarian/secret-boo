@@ -14,6 +14,7 @@
 #define CURRENT_SENSOR     A5
 
 #define STATE_INITIAL      20
+#define STATE_INITIAL_TIGHTENING  25
 #define STATE_TIGHTENING   21
 #define STATE_CLOSED       22
 #define STATE_LOOSENING    23
@@ -45,6 +46,8 @@ int currentSensorValue = 0;
 int switchValue = 0;
 int currentValue = 0;
 
+int STATE = STATE_INITIAL;
+
 void setup() {
   pixels.begin(); // This initializes the NeoPixel library.
   pinMode(SWITCH_PIN, INPUT);
@@ -70,12 +73,44 @@ void loop() {
   
   readForceSensors();
   
-  readHeelSwitch();
-  
   // Chance motor direction
   controlMotor(switchValue, forceSensorValues[2]/6);
   
   debugPrint();
+  
+  // state machine handling
+  
+  checkHeelClosed();
+  switch (STATE) {
+    case STATE_INITIAL:
+      break;
+    case STATE_INITIAL_TIGHTENING:
+    
+      break;
+    case STATE_TIGHTENING:
+      
+      break;
+    case STATE_CLOSED:
+      
+      break;
+    case STATE_LOOSENING:
+      
+      break;
+    case STATE_CONTROL:
+      
+      break;
+    default:
+
+      break;    
+  }
+}
+
+void checkHeelClosed() {
+  readHeelSwitch();
+  if (STATE == STATE_INITIAL && !switchValue)
+    switchState(STATE, STATE_INITIAL_TIGHTENING);
+  else
+    resetShoe();
 }
 
 void controlMotor(boolean dir, int power)
@@ -116,7 +151,9 @@ void readHeelSwitch() {
 }
 
 void resetShoe() {
-
+  // TODO: loosen the shoe to max loosnes
+  if (STATE != STATE_INITIAL)
+    switchState(STATE, STATE_INITIAL);
 }
 
 void tightenLaces() {
@@ -127,8 +164,19 @@ void loosenLaces() {
   
 }
 
+void switchState(int oldState, int newState) {
+  Serial.print  (" Switching state ");
+  Serial.print("Old state ");
+  Serial.print(oldState);
+  Serial.print(" , new State");
+  Serial.println(newState);
+  STATE = newState;
+}
+
 void debugPrint() {
-  Serial.print("Hall: ");
+  Serial.print("State: ");
+  Serial.print(STATE);
+  Serial.print(" Hall: ");
   Serial.print(hallSensorValue);
   Serial.print(" Forces: ");
   Serial.print(forceSensorValues[0]);
