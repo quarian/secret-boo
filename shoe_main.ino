@@ -7,7 +7,7 @@
 #define MOTOR_EN           6
 #define LED_PIN            10
 
-#define HALL_SENS          A0
+#define HALL_SENSOR        A0
 #define FORCE_SENSOR_1     A2
 #define FORCE_SENSOR_2     A3
 #define FORCE_SENSOR_3     A4
@@ -38,6 +38,13 @@ int BLUE = 0;
 
 int delayval = 10; // common delay value for the system
 
+// variables to store sensor values for the main loop
+int forceSensorValues[] = {0, 0, 0};
+int hallSensorValue = 0;
+int currentSensorValue = 0;
+int switchValue = 0;
+int currentValue = 0;
+
 void setup() {
   pixels.begin(); // This initializes the NeoPixel library.
   pinMode(SWITCH_PIN, INPUT);
@@ -56,44 +63,19 @@ void loop() {
   pixels.show(); // This sends the updated pixel color to the hardware.
   delay(delayval); // Delay for a period of time (in milliseconds).
   
-  // Hall sensor
-  int hall = analogRead(HALL_SENS);
+  readHallSensor();
   
   // Make sure reading is not 0 (measurement made during PWM low phase
-  int current = 0;
-  for(int i = 0; i < 10; i++)
-  {
-    current = analogRead(CURRENT_SENSOR);
-    if(current != 0)
-      break;
-  }
-  
-  // Force sensors
-  int force1 = analogRead(FORCE_SENSOR_1);
-  int force2 = analogRead(FORCE_SENSOR_2);
-  int force3 = analogRead(FORCE_SENSOR_3);
+  readCurrentSensor();
   
   readForceSensors();
   
-  // Switch
-  int sw = digitalRead(SWITCH_PIN);
+  readHeelSwitch();
   
   // Chance motor direction
-  controlMotor(sw, force2/6);
+  controlMotor(switchValue, forceSensorValues[2]/6);
   
-  // DEbug print
-  Serial.print("Hall: ");
-  Serial.print(hall);
-  Serial.print(" Force 1: ");
-  Serial.print(force1);
-  Serial.print(" Force 2: ");
-  Serial.print(force2);
-  Serial.print(" Force 3: ");
-  Serial.print(force3);
-  Serial.print(" Current: ");
-  Serial.print(current);
-  Serial.print(" Switch: ");
-  Serial.println(sw);
+  debugPrint();
 }
 
 void controlMotor(boolean dir, int power)
@@ -108,20 +90,29 @@ void controlMotor(boolean dir, int power)
 }
 
 void readForceSensors() {
-  int force1 = analogRead(FORCE_SENSOR_1);
-  int force2 = analogRead(FORCE_SENSOR_2);
-  int force3 = analogRead(FORCE_SENSOR_3);
+  forceSensorValues[0] = analogRead(FORCE_SENSOR_1);
+  forceSensorValues[1] = analogRead(FORCE_SENSOR_2);
+  forceSensorValues[2] = analogRead(FORCE_SENSOR_3);
   
-  RED = force2 / 4;
-  BLUE = force3 / 4;
+  RED = forceSensorValues[1] / 4;
+  BLUE = forceSensorValues[2] / 4;
 }
 
 void readHallSensor() {
-    
+  hallSensorValue = analogRead(HALL_SENSOR);
+}
+
+void readCurrentSensor() {
+  for(int i = 0; i < 10; i++)
+  {
+    currentValue = analogRead(CURRENT_SENSOR);
+    if(currentValue != 0)
+      break;
+  }
 }
 
 void readHeelSwitch() {
-  
+  switchValue = digitalRead(SWITCH_PIN);
 }
 
 void resetShoe() {
@@ -134,4 +125,19 @@ void tightenLaces() {
 
 void loosenLaces() {
   
+}
+
+void debugPrint() {
+  Serial.print("Hall: ");
+  Serial.print(hallSensorValue);
+  Serial.print(" Forces: ");
+  Serial.print(forceSensorValues[0]);
+  Serial.print(" ");
+  Serial.print(forceSensorValues[1]);
+  Serial.print(" ");
+  Serial.print(forceSensorValues[2]);
+  Serial.print(" Current: ");
+  Serial.print(currentValue);
+  Serial.print(" Switch: ");
+  Serial.println(switchValue);
 }
