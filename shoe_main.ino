@@ -129,6 +129,7 @@ void readForceSensors() {
   forceSensorValues[1] = analogRead(FORCE_SENSOR_2);
   forceSensorValues[2] = analogRead(FORCE_SENSOR_3);
   
+  GREEN = forceSensorValues[0] / 4;
   RED = forceSensorValues[1] / 4;
   BLUE = forceSensorValues[2] / 4;
 }
