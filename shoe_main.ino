@@ -239,7 +239,7 @@ void switchState(int oldState, int newState) {
 
 void debugPrint() {
   Serial.print("State: ");
-  Serial.print(STATE);
+  Serial.print(getStateByNumber(STATE));
   Serial.print(" Hall: ");
   Serial.print(hallSensorValue);
   Serial.print(" Forces: ");
@@ -252,4 +252,24 @@ void debugPrint() {
   Serial.print(currentValue);
   Serial.print(" Switch: ");
   Serial.println(switchValue);
+}
+
+String getStateByNumber(int state) {
+  switch (state) {
+    case STATE_INITIAL:
+      return "Initial state";
+    case STATE_INITIAL_TIGHTENING:
+      return "Initial tightening";
+    case STATE_CLOSED:
+      return "Closed";
+    case STATE_LOOSENING:
+      return "Loosening";
+    case STATE_TIGHTENING:
+      return "Tightening";
+    case STATE_CONTROL:
+      return "Control";
+    default:  
+      return "Should not be here"; 
+  }  
+  
 }
