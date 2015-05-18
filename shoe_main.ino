@@ -23,6 +23,9 @@
 #define CLOCKWISE          0
 #define COUNTERCLOCKWISE   1
 
+#define TOP_THRESHOLD       1000
+#define HALL_THRESHOLD      200
+
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      1
 
@@ -43,8 +46,11 @@ int delayval = 10; // common delay value for the system
 int forceSensorValues[] = {0, 0, 0};
 int hallSensorValue = 0;
 int currentSensorValue = 0;
-int switchValue = 0;
+int switchValue = 0; // value == 1 when open, 0 when closed
 int currentValue = 0;
+unsigned long hallTime = 0;
+unsigned long hallTimeCompare = 0;
+boolean hallCompare = false;
 
 int STATE = STATE_INITIAL;
 
@@ -85,13 +91,13 @@ void loop() {
     case STATE_INITIAL:
       break;
     case STATE_INITIAL_TIGHTENING:
-    
+      checkTopTightness();
       break;
     case STATE_TIGHTENING:
       
       break;
     case STATE_CLOSED:
-      
+      checkHallSensor();
       break;
     case STATE_LOOSENING:
       
@@ -109,7 +115,7 @@ void checkHeelClosed() {
   readHeelSwitch();
   if (STATE == STATE_INITIAL && !switchValue)
     switchState(STATE, STATE_INITIAL_TIGHTENING);
-  else
+  else if (switchValue)
     resetShoe();
 }
 
@@ -138,6 +144,24 @@ void readHallSensor() {
   hallSensorValue = analogRead(HALL_SENSOR);
 }
 
+void checkHallSensor() {
+  Serial.println("Checking hall sensor");
+  hallCompare = hallSensorValue < HALL_THRESHOLD;
+  if (hallCompare) {
+    Serial.println("Hall sensors close");
+    hallTimeCompare = millis();
+    if (hallTime == 0)
+      hallTime = millis();
+    Serial.println(hallTimeCompare - hallTime);
+    if (hallTimeCompare - hallTime > 1000) {
+      switchState(STATE, STATE_CONTROL);
+      hallTime = 0;
+    }
+  } else {
+    hallTime = 0;  
+  }
+}
+
 void readCurrentSensor() {
   for(int i = 0; i < 10; i++)
   {
@@ -159,6 +183,13 @@ void resetShoe() {
 
 void tightenLaces() {
   
+}
+
+void checkTopTightness() {
+  Serial.print("Checking top tightness, ");
+  Serial.println(forceSensorValues[0]);
+  if (forceSensorValues[0] > TOP_THRESHOLD)
+    switchState(STATE, STATE_CLOSED);
 }
 
 void loosenLaces() {
