@@ -23,8 +23,9 @@
 #define CLOCKWISE          0
 #define COUNTERCLOCKWISE   1
 
-#define TOP_THRESHOLD       1000
-#define HALL_THRESHOLD      200
+#define TOP_THRESHOLD      1000
+#define HALL_THRESHOLD     10
+#define HALL_BASE_VALUE    605 
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      1
@@ -148,7 +149,7 @@ void readHallSensor() {
 
 void checkHallSensor() {
   Serial.println("Checking hall sensor");
-  hallCompare = hallSensorValue < HALL_THRESHOLD;
+  hallCompare = abs(hallSensorValue - HALL_BASE_VALUE) > HALL_THRESHOLD;
   if (hallCompare) {
     Serial.println("Hall sensors close");
     hallTimeCompare = millis();
