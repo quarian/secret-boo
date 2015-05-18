@@ -88,6 +88,7 @@ void loop() {
     case STATE_INITIAL:
       break;
     case STATE_INITIAL_TIGHTENING:
+      controlMotor(CLOCKWISE, 20);
       checkTopTightness();
       break;
     case STATE_TIGHTENING:
@@ -125,6 +126,10 @@ void controlMotor(boolean dir, int power)
     analogWrite(MOTOR_EN, power);
   else
     analogWrite(MOTOR_EN, 0);
+}
+
+void stopMotor() {
+    controlMotor(CLOCKWISE, 0);  
 }
 
 void readForceSensors() {
@@ -179,7 +184,7 @@ void manageControlState() {
 void manageMotor(int direction, int location) {
   if (forceSensorValues[location] < 1000) {
     switchState(STATE, STATE_CONTROL);
-    controlMotor(direction, 0);
+    stopMotor();
     return;  
   }
   controlMotor(direction, forceSensorValues[location]/50); 
@@ -202,6 +207,7 @@ void resetShoe() {
   // TODO: loosen the shoe to max loosnes
   if (STATE != STATE_INITIAL)
     switchState(STATE, STATE_INITIAL);
+  stopMotor();
 }
 
 void tightenLaces() {
@@ -211,8 +217,10 @@ void tightenLaces() {
 void checkTopTightness() {
   Serial.print("Checking top tightness, ");
   Serial.println(forceSensorValues[0]);
-  if (forceSensorValues[0] > TOP_THRESHOLD)
+  if (forceSensorValues[0] > TOP_THRESHOLD) {
     switchState(STATE, STATE_CLOSED);
+    stopMotor();
+   }
 }
 
 void loosenLaces() {
