@@ -79,9 +79,6 @@ void loop() {
   
   readForceSensors();
   
-  // Chance motor direction
-  controlMotor(switchValue, forceSensorValues[2]/6);
-  
   debugPrint();
   
   // state machine handling
@@ -94,16 +91,16 @@ void loop() {
       checkTopTightness();
       break;
     case STATE_TIGHTENING:
-      
+      manageMotor(CLOCKWISE, 2);
       break;
     case STATE_CLOSED:
       checkHallSensor();
       break;
     case STATE_LOOSENING:
-      
+      manageMotor(COUNTERCLOCKWISE, 1);
       break;
     case STATE_CONTROL:
-      
+      manageControlState();
       break;
     default:
 
@@ -154,12 +151,38 @@ void checkHallSensor() {
       hallTime = millis();
     Serial.println(hallTimeCompare - hallTime);
     if (hallTimeCompare - hallTime > 1000) {
-      switchState(STATE, STATE_CONTROL);
+      if (STATE == STATE_CLOSED)
+        switchState(STATE, STATE_CONTROL);
+      else
+        switchState(STATE, STATE_CLOSED);
       hallTime = 0;
     }
   } else {
     hallTime = 0;  
   }
+}
+
+void manageControlState() {
+  checkHallSensor();
+  if (STATE != STATE_CONTROL)
+    return;
+  if (forceSensorValues[1] > 1000) {
+    switchState(STATE, STATE_LOOSENING);
+    return;
+  }
+  if (forceSensorValues[2] > 1000) {
+    switchState(STATE, STATE_TIGHTENING);
+    return;
+  }
+}
+
+void manageMotor(int direction, int location) {
+  if (forceSensorValues[location] < 1000) {
+    switchState(STATE, STATE_CONTROL);
+    controlMotor(direction, 0);
+    return;  
+  }
+  controlMotor(direction, forceSensorValues[location]/50); 
 }
 
 void readCurrentSensor() {
