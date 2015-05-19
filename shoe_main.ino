@@ -87,14 +87,10 @@ void loop() {
   checkHeelClosed();
   switch (STATE) {
     case STATE_INITIAL:
-      RED = 0;
-      GREEN = 0;
-      BLUE = 150;
+      setColor(0, 0, 150);
       break;
     case STATE_INITIAL_TIGHTENING:
-      RED = 0;
-      GREEN = 150;
-      BLUE = 150;
+      setColor(0, 150, 150);
       controlMotor(CLOCKWISE, 20);
       checkTopTightness();
       break;
@@ -102,18 +98,14 @@ void loop() {
       manageMotor(CLOCKWISE, 2);
       break;
     case STATE_CLOSED:
-      RED = 0;
-      GREEN = 150;
-      BLUE = 0;
+      setColor(0, 150, 0);
       checkHallSensor();
       break;
     case STATE_LOOSENING:
       manageMotor(COUNTERCLOCKWISE, 1);
       break;
     case STATE_CONTROL:
-      RED = 150;
-      GREEN = 0;
-      BLUE = 0;
+      setColor(150, 0, 0);
       manageControlState();
       break;
     default:
@@ -238,6 +230,12 @@ void checkTopTightness() {
 
 void loosenLaces() {
   
+}
+
+void setColor(int red, int green, int blue) {
+  RED = red;
+  GREEN = green;
+  BLUE = blue;  
 }
 
 void switchState(int oldState, int newState) {
