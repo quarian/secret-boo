@@ -87,8 +87,14 @@ void loop() {
   checkHeelClosed();
   switch (STATE) {
     case STATE_INITIAL:
+      RED = 0;
+      GREEN = 0;
+      BLUE = 150;
       break;
     case STATE_INITIAL_TIGHTENING:
+      RED = 0;
+      GREEN = 150;
+      BLUE = 150;
       controlMotor(CLOCKWISE, 20);
       checkTopTightness();
       break;
@@ -96,12 +102,18 @@ void loop() {
       manageMotor(CLOCKWISE, 2);
       break;
     case STATE_CLOSED:
+      RED = 0;
+      GREEN = 150;
+      BLUE = 0;
       checkHallSensor();
       break;
     case STATE_LOOSENING:
       manageMotor(COUNTERCLOCKWISE, 1);
       break;
     case STATE_CONTROL:
+      RED = 150;
+      GREEN = 0;
+      BLUE = 0;
       manageControlState();
       break;
     default:
@@ -138,9 +150,9 @@ void readForceSensors() {
   forceSensorValues[1] = analogRead(FORCE_SENSOR_2);
   forceSensorValues[2] = analogRead(FORCE_SENSOR_3);
   
-  GREEN = forceSensorValues[0] / 4;
-  RED = forceSensorValues[1] / 4;
-  BLUE = forceSensorValues[2] / 4;
+  GREEN = forceSensorValues[0] > 800 ? forceSensorValues[0] / 8 : 0;
+  RED = forceSensorValues[1] > 800 ? forceSensorValues[1] / 8 : 0;
+  BLUE = forceSensorValues[2] > 800 ? forceSensorValues[2] / 8 : 0;
 }
 
 void readHallSensor() {
