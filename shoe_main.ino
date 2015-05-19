@@ -24,8 +24,8 @@
 #define COUNTERCLOCKWISE   1
 
 #define TOP_THRESHOLD      1000
-#define HALL_THRESHOLD     10
-#define HALL_BASE_VALUE    605 
+#define HALL_THRESHOLD     3      //  These two values are dictated by the placement of the hall sensor
+#define HALL_BASE_VALUE    657    //  and the magnets. Check these later!
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      1
