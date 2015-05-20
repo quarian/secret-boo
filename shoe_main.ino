@@ -25,7 +25,7 @@
 #define COUNTERCLOCKWISE   1
 
 #define TOP_THRESHOLD      700
-#define HEEL_THRESHOLD     1022
+#define HEEL_THRESHOLD     950
 #define TOE_THRESHOLD      1022
 
 #define HEEL_SENSOR        0
@@ -106,13 +106,15 @@ void loop() {
       checkTopTightness();
       break;
     case STATE_TIGHTENING:
+      setColor(150, 150, 0);
       manageMotor(CLOCKWISE, TOE_SENSOR);
       break;
     case STATE_CLOSED:
       setColor(0, 150, 0);
       checkHallSensor();
       break;
-    case STATE_LOOSENING:
+    case STATE_LOOSENING: 
+      setColor(150, 0, 150);
       manageMotor(COUNTERCLOCKWISE, HEEL_SENSOR);
       break;
     case STATE_CONTROL:
@@ -152,10 +154,6 @@ void readForceSensors() {
   forceSensorValues[0] = analogRead(FORCE_SENSOR_1);
   forceSensorValues[1] = analogRead(FORCE_SENSOR_2);
   forceSensorValues[2] = analogRead(FORCE_SENSOR_3);
-  
-  GREEN = forceSensorValues[0] > 800 ? forceSensorValues[0] / 8 : 0;
-  RED = forceSensorValues[1] > 800 ? forceSensorValues[1] / 8 : 0;
-  BLUE = forceSensorValues[2] > 800 ? forceSensorValues[2] / 8 : 0;
 }
 
 void readHallSensor() {
@@ -188,7 +186,7 @@ void manageControlState() {
   if (STATE != STATE_CONTROL)
     return;
   
-  if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < 200)
+  if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < 100)
     return;
     
   if (forceSensorValues[HEEL_SENSOR] > HEEL_THRESHOLD) {
@@ -208,7 +206,8 @@ void manageMotor(int direction, int location) {
     stopMotor();
     return;  
   }
-  controlMotor(direction, MOTOR_MAX); 
+  if (currentValue < 90)
+    controlMotor(direction, MOTOR_MAX); 
 }
 
 void readCurrentSensor() {
