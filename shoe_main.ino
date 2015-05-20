@@ -24,11 +24,13 @@
 #define CLOCKWISE          0
 #define COUNTERCLOCKWISE   1
 
-#define TOP_THRESHOLD      1000
+#define TOP_THRESHOLD      700
+#define HEEL_THRESHOLD     1022
+#define TOE_THRESHOLD      1022
 
-#define HEEL_SENSOR        2
+#define HEEL_SENSOR        0
 #define TONGUE_SENSOR      1
-#define TOE_SENSOR         0
+#define TOE_SENSOR         2
 
 #define MOTOR_MAX          255
 
@@ -185,18 +187,23 @@ void manageControlState() {
   checkHallSensor();
   if (STATE != STATE_CONTROL)
     return;
-  if (forceSensorValues[HEEL_SENSOR] > 1000) {
+  
+  if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < 200)
+    return;
+    
+  if (forceSensorValues[HEEL_SENSOR] > HEEL_THRESHOLD) {
     switchState(STATE, STATE_LOOSENING);
     return;
   }
-  if (forceSensorValues[TOE_SENSOR] > 1000) {
+  
+  if (forceSensorValues[TOE_SENSOR] > TOE_THRESHOLD) {
     switchState(STATE, STATE_TIGHTENING);
     return;
   }
 }
 
 void manageMotor(int direction, int location) {
-  if (forceSensorValues[location] < 1000) {
+  if (forceSensorValues[location] < HEEL_THRESHOLD) {
     switchState(STATE, STATE_CONTROL);
     stopMotor();
     return;  
