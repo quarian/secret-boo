@@ -24,8 +24,14 @@
 #define COUNTERCLOCKWISE   1
 
 #define TOP_THRESHOLD      1000
-#define HALL_THRESHOLD     3      //  These two values are dictated by the placement of the hall sensor
-#define HALL_BASE_VALUE    657    //  and the magnets. Check these later!
+#define HALL_THRESHOLD     10      //  These two values are dictated by the placement of the hall sensor
+#define HALL_BASE_VALUE    605    //  and the magnets. Check these later!
+
+#define HEEL_SENSOR        2
+#define TONGUE_SENSOR      1
+#define TOE_SENSOR         0
+
+#define MOTOR_MAX          255
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      1
@@ -91,18 +97,18 @@ void loop() {
       break;
     case STATE_INITIAL_TIGHTENING:
       setColor(0, 150, 150);
-      controlMotor(CLOCKWISE, 20);
+      controlMotor(CLOCKWISE, MOTOR_MAX);
       checkTopTightness();
       break;
     case STATE_TIGHTENING:
-      manageMotor(CLOCKWISE, 2);
+      manageMotor(CLOCKWISE, TOE_SENSOR);
       break;
     case STATE_CLOSED:
       setColor(0, 150, 0);
       checkHallSensor();
       break;
     case STATE_LOOSENING:
-      manageMotor(COUNTERCLOCKWISE, 1);
+      manageMotor(COUNTERCLOCKWISE, HEEL_SENSOR);
       break;
     case STATE_CONTROL:
       setColor(150, 0, 0);
@@ -176,11 +182,11 @@ void manageControlState() {
   checkHallSensor();
   if (STATE != STATE_CONTROL)
     return;
-  if (forceSensorValues[1] > 1000) {
+  if (forceSensorValues[HEEL_SENSOR] > 1000) {
     switchState(STATE, STATE_LOOSENING);
     return;
   }
-  if (forceSensorValues[2] > 1000) {
+  if (forceSensorValues[TOE_SENSOR] > 1000) {
     switchState(STATE, STATE_TIGHTENING);
     return;
   }
@@ -192,7 +198,7 @@ void manageMotor(int direction, int location) {
     stopMotor();
     return;  
   }
-  controlMotor(direction, forceSensorValues[location]/50); 
+  controlMotor(direction, MOTOR_MAX); 
 }
 
 void readCurrentSensor() {
@@ -221,8 +227,8 @@ void tightenLaces() {
 
 void checkTopTightness() {
   Serial.print("Checking top tightness, ");
-  Serial.println(forceSensorValues[0]);
-  if (forceSensorValues[0] > TOP_THRESHOLD) {
+  Serial.println(forceSensorValues[TONGUE_SENSOR]);
+  if (forceSensorValues[TONGUE_SENSOR] > TOP_THRESHOLD) {
     switchState(STATE, STATE_CLOSED);
     stopMotor();
    }
