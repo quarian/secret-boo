@@ -1,4 +1,5 @@
 #include <Adafruit_NeoPixel.h>
+#include "settings.h"
 
 // Which pin on the Arduino is connected to?
 #define SWITCH_PIN         2
@@ -24,8 +25,6 @@
 #define COUNTERCLOCKWISE   1
 
 #define TOP_THRESHOLD      1000
-#define HALL_THRESHOLD     10      //  These two values are dictated by the placement of the hall sensor
-#define HALL_BASE_VALUE    605    //  and the magnets. Check these later!
 
 #define HEEL_SENSOR        2
 #define TONGUE_SENSOR      1
@@ -48,6 +47,10 @@ int GREEN = 0;
 int BLUE = 0;
 
 int delayval = 10; // common delay value for the system
+
+// settings variables
+int hallSensorThreshold = HALL_SENSOR_THRESHOLD;
+int hallSensorBaseValue = HALL_SENSOR_BASE_VALUE;
 
 // variables to store sensor values for the main loop
 int forceSensorValues[] = {0, 0, 0};
@@ -159,7 +162,7 @@ void readHallSensor() {
 
 void checkHallSensor() {
   Serial.println("Checking hall sensor");
-  hallCompare = abs(hallSensorValue - HALL_BASE_VALUE) > HALL_THRESHOLD;
+  hallCompare = abs(hallSensorValue - hallSensorBaseValue) > hallSensorThreshold;
   if (hallCompare) {
     Serial.println("Hall sensors close");
     hallTimeCompare = millis();
