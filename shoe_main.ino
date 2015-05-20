@@ -124,7 +124,7 @@ void checkHeelClosed() {
   readHeelSwitch();
   if (STATE == STATE_INITIAL && !switchValue)
     switchState(STATE, STATE_INITIAL_TIGHTENING);
-  else if (switchValue)
+  else if (STATE != STATE_INITIAL && switchValue)
     resetShoe();
 }
 
@@ -218,6 +218,9 @@ void resetShoe() {
   // TODO: loosen the shoe to max loosnes
   if (STATE != STATE_INITIAL)
     switchState(STATE, STATE_INITIAL);
+  stopMotor();
+  controlMotor(COUNTERCLOCKWISE, MOTOR_MAX);
+  delay(5000);
   stopMotor();
 }
 
