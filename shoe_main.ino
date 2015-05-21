@@ -24,10 +24,6 @@
 #define CLOCKWISE          0
 #define COUNTERCLOCKWISE   1
 
-#define TOP_THRESHOLD      700
-#define HEEL_THRESHOLD     950
-#define TOE_THRESHOLD      1022
-
 #define HEEL_SENSOR        0
 #define TONGUE_SENSOR      1
 #define TOE_SENSOR         2
@@ -53,6 +49,9 @@ int delayval = 10; // common delay value for the system
 // settings variables
 int hallSensorThreshold = HALL_SENSOR_THRESHOLD;
 int hallSensorBaseValue = HALL_SENSOR_BASE_VALUE;
+int toeForceThreshold = TOE_THRESHOLD;
+int heelForceThreshold = HEEL_THRESHOLD;
+int tongueForceThreshold = TOP_THRESHOLD;
 
 // variables to store sensor values for the main loop
 int forceSensorValues[] = {0, 0, 0};
@@ -189,19 +188,20 @@ void manageControlState() {
   if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < 100)
     return;
     
-  if (forceSensorValues[HEEL_SENSOR] > HEEL_THRESHOLD) {
+  if (forceSensorValues[HEEL_SENSOR] > heelForceThreshold) {
     switchState(STATE, STATE_LOOSENING);
     return;
   }
   
-  if (forceSensorValues[TOE_SENSOR] > TOE_THRESHOLD) {
+  if (forceSensorValues[TOE_SENSOR] > toeForceThreshold) {
     switchState(STATE, STATE_TIGHTENING);
     return;
   }
 }
 
 void manageMotor(int direction, int location) {
-  if (forceSensorValues[location] < HEEL_THRESHOLD) {
+  if ((location == HEEL_SENSOR && forceSensorValues[HEEL_SENSOR] < heelForceThreshold) ||
+        (location == TOE_SENSOR && forceSensorValues[TOE_SENSOR] < toeForceThreshold)) {
     switchState(STATE, STATE_CONTROL);
     stopMotor();
     return;  
@@ -240,7 +240,7 @@ void tightenLaces() {
 void checkTopTightness() {
   //erial.print("Checking top tightness, ");
   //Serial.println(forceSensorValues[TONGUE_SENSOR]);
-  if (forceSensorValues[TONGUE_SENSOR] > TOP_THRESHOLD) {
+  if (forceSensorValues[TONGUE_SENSOR] > tongueForceThreshold) {
     switchState(STATE, STATE_CLOSED);
     stopMotor();
    }
@@ -285,9 +285,9 @@ void debugPrint() {
 String getStateByNumber(int state) {
   switch (state) {
     case STATE_INITIAL:
-      return "Initial state";
+      return "Initial_state";
     case STATE_INITIAL_TIGHTENING:
-      return "Initial tightening";
+      return "Initial_tightening";
     case STATE_CLOSED:
       return "Closed";
     case STATE_LOOSENING:
