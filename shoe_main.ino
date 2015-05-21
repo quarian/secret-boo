@@ -192,23 +192,23 @@ void manageControlState() {
   if (STATE != STATE_CONTROL)
     return;
   
-  if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < 100)
+  if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < 200)
     return;
     
-  if (forceSensorValues[HEEL_SENSOR] > heelForceThreshold) {
+  if (forceSensorValues[HEEL_SENSOR] > toeForceThreshold) {
     switchState(STATE, STATE_LOOSENING);
     return;
   }
   
-  if (forceSensorValues[TOE_SENSOR] > toeForceThreshold) {
+  if (forceSensorValues[TOE_SENSOR] > heelForceThreshold) {
     switchState(STATE, STATE_TIGHTENING);
     return;
   }
 }
 
 void manageMotor(int direction, int location) {
-  if ((location == HEEL_SENSOR && forceSensorValues[HEEL_SENSOR] < heelForceThreshold) ||
-        (location == TOE_SENSOR && forceSensorValues[TOE_SENSOR] < toeForceThreshold)) {
+  if ((location == HEEL_SENSOR && forceSensorValues[HEEL_SENSOR] < toeForceThreshold) ||
+        (location == TOE_SENSOR && forceSensorValues[TOE_SENSOR] < heelForceThreshold)) {
     switchState(STATE, STATE_CONTROL);
     stopMotor();
     return;  
