@@ -20,6 +20,7 @@
 #define STATE_CLOSED       22
 #define STATE_LOOSENING    23
 #define STATE_CONTROL      24
+#define STATE_RESETTING    26
 
 #define CLOCKWISE          0
 #define COUNTERCLOCKWISE   1
@@ -62,6 +63,7 @@ int currentValue = 0;
 unsigned long hallTime = 0;
 unsigned long hallTimeCompare = 0;
 boolean hallCompare = false;
+unsigned long resetInitialTime = 0;
 
 int STATE = STATE_INITIAL;
 
@@ -120,6 +122,9 @@ void loop() {
       setColor(150, 0, 0);
       manageControlState();
       break;
+    case STATE_RESETTING:
+      setColor(255, 102, 0);
+      manageReset();
     default:
 
       break;    
@@ -128,10 +133,12 @@ void loop() {
 
 void checkHeelClosed() {
   readHeelSwitch();
-  if (STATE == STATE_INITIAL && !switchValue)
+  if ((STATE == STATE_INITIAL || STATE == STATE_RESETTING) && !switchValue)
     switchState(STATE, STATE_INITIAL_TIGHTENING);
-  else if (STATE != STATE_INITIAL && switchValue)
-    resetShoe();
+  else if (STATE != STATE_INITIAL && STATE != STATE_RESETTING && switchValue) {
+    resetInitialTime = millis();
+    switchState(STATE, STATE_RESETTING); 
+  }
 }
 
 void controlMotor(boolean dir, int power)
@@ -233,6 +240,15 @@ void resetShoe() {
   stopMotor();
 }
 
+void manageReset() {
+  if (millis() - resetInitialTime > 3000) {
+    stopMotor();
+    switchState(STATE, STATE_INITIAL);
+    return;
+  }
+  manageMotor(COUNTERCLOCKWISE, MOTOR_MAX);
+}
+
 void tightenLaces() {
   
 }
@@ -296,6 +312,8 @@ String getStateByNumber(int state) {
       return "Tightening";
     case STATE_CONTROL:
       return "Control";
+    case STATE_RESETTING:
+      return "Resetting";
     default:  
       return "Should not be here"; 
   }  
