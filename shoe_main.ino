@@ -161,14 +161,14 @@ void readHallSensor() {
 }
 
 void checkHallSensor() {
-  Serial.println("Checking hall sensor");
+  //Serial.println("Checking hall sensor");
   hallCompare = abs(hallSensorValue - hallSensorBaseValue) > hallSensorThreshold;
   if (hallCompare) {
-    Serial.println("Hall sensors close");
+    //Serial.println("Hall sensors close");
     hallTimeCompare = millis();
     if (hallTime == 0)
       hallTime = millis();
-    Serial.println(hallTimeCompare - hallTime);
+    //Serial.println(hallTimeCompare - hallTime);
     if (hallTimeCompare - hallTime > 1000) {
       if (STATE == STATE_CLOSED)
         switchState(STATE, STATE_CONTROL);
@@ -238,8 +238,8 @@ void tightenLaces() {
 }
 
 void checkTopTightness() {
-  Serial.print("Checking top tightness, ");
-  Serial.println(forceSensorValues[TONGUE_SENSOR]);
+  //erial.print("Checking top tightness, ");
+  //Serial.println(forceSensorValues[TONGUE_SENSOR]);
   if (forceSensorValues[TONGUE_SENSOR] > TOP_THRESHOLD) {
     switchState(STATE, STATE_CLOSED);
     stopMotor();
