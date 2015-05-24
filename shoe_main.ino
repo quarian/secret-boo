@@ -61,7 +61,6 @@ int currentSensorValue = 0;
 int switchValue = 0; // value == 1 when open, 0 when closed
 int currentValue = 0;
 unsigned long hallTime = 0;
-unsigned long hallTimeCompare = 0;
 boolean hallCompare = false;
 unsigned long resetInitialTime = 0;
 
@@ -170,21 +169,20 @@ void readHallSensor() {
 void checkHallSensor() {
   //Serial.println("Checking hall sensor");
   hallCompare = abs(hallSensorValue - hallSensorBaseValue) > hallSensorThreshold;
-  if (hallCompare) {
-    //Serial.println("Hall sensors close");
-    hallTimeCompare = millis();
-    if (hallTime == 0)
-      hallTime = millis();
-    //Serial.println(hallTimeCompare - hallTime);
-    if (hallTimeCompare - hallTime > 1000) {
-      if (STATE == STATE_CLOSED)
-        switchState(STATE, STATE_CONTROL);
-      else
-        switchState(STATE, STATE_CLOSED);
-      hallTime = 0;
-    }
-  } else {
-    hallTime = 0;  
+  if (hallCompare)
+    compareHallValues();
+  else
+    hallTime = 0; 
+}
+
+void compareHallValues() {
+  hallTime = hallTime == 0 ? millis() : hallTime;
+  if (millis() - hallTime > 1000) {
+    if (STATE == STATE_CLOSED)
+      switchState(STATE, STATE_CONTROL);
+    else
+      switchState(STATE, STATE_CLOSED);
+    hallTime = 0;
   }
 }
 
