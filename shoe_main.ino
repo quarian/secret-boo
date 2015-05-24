@@ -206,19 +206,25 @@ void manageControlState() {
 }
 
 void manageMotor(int direction, int location) {
-  if ((location == HEEL_SENSOR && forceSensorValues[HEEL_SENSOR] < toeForceThreshold) ||
-        (location == TOE_SENSOR && forceSensorValues[TOE_SENSOR] < heelForceThreshold)) {
-    switchState(STATE, STATE_CONTROL);
+  int targetState = getTargetStateForMotor(location);
+  if (targetState) {
     stopMotor();
-    return;  
-  }
-  if (location == TONGUE_SENSOR && forceSensorValues[TONGUE_SENSOR] < tongueForceThreshold) {
-    switchState(STATE, STATE_INITIAL);
-    stopMotor();
-    return;  
-  }
-  if (currentValue < 90)
+    switchState(STATE, targetState);
+  } else if (currentValue < 90)
     controlMotor(direction, MOTOR_MAX); 
+}
+
+int getTargetStateForMotor(int location) {
+  if (checkSensorUnderThreshold(location, HEEL_SENSOR, toeForceThreshold) ||
+      checkSensorUnderThreshold(location, TOE_SENSOR, heelForceThreshold))
+    return STATE_CONTROL;
+  if (checkSensorUnderThreshold(location, TONGUE_SENSOR, tongueForceThreshold))
+    return STATE_INITIAL;
+  return 0;
+}
+
+boolean checkSensorUnderThreshold(int location, int sensor, int threshold) {
+  return location == sensor && forceSensorValues[sensor] < threshold;
 }
 
 void readCurrentSensor() {
