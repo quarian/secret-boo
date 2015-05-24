@@ -100,6 +100,7 @@ void loop() {
   switch (STATE) {
     case STATE_INITIAL:
       setColor(0, 0, 150);
+      manageMotor(COUNTERCLOCKWISE, TONGUE_SENSOR); 
       break;
     case STATE_INITIAL_TIGHTENING:
       setColor(0, 150, 150);
@@ -210,6 +211,11 @@ void manageMotor(int direction, int location) {
   if ((location == HEEL_SENSOR && forceSensorValues[HEEL_SENSOR] < toeForceThreshold) ||
         (location == TOE_SENSOR && forceSensorValues[TOE_SENSOR] < heelForceThreshold)) {
     switchState(STATE, STATE_CONTROL);
+    stopMotor();
+    return;  
+  }
+  if (location == TONGUE_SENSOR && forceSensorValues[TONGUE_SENSOR] < tongueForceThreshold) {
+    switchState(STATE, STATE_INITIAL);
     stopMotor();
     return;  
   }
