@@ -22,12 +22,12 @@
 #define STATE_CONTROL      24
 #define STATE_RESETTING    26
 
-#define CLOCKWISE          0
-#define COUNTERCLOCKWISE   1
+#define TIGHTEN            0
+#define LOOSEN             1
 
-#define HEEL_SENSOR        0
+#define HEEL_SENSOR        2
 #define TONGUE_SENSOR      1
-#define TOE_SENSOR         2
+#define TOE_SENSOR         0
 
 #define MOTOR_MAX          255
 
@@ -108,16 +108,16 @@ void handleStateMachine() {
   switch (STATE) {
     case STATE_INITIAL:
       setColor(0, 0, 150);
-      manageMotor(COUNTERCLOCKWISE, TONGUE_SENSOR); 
+      manageMotor(LOOSEN, TONGUE_SENSOR); 
       break;
     case STATE_INITIAL_TIGHTENING:
       setColor(0, 150, 150);
-      controlMotor(CLOCKWISE, MOTOR_MAX);
+      controlMotor(TIGHTEN, MOTOR_MAX);
       checkTopTightness();
       break;
     case STATE_TIGHTENING:
       setColor(150, 150, 0);
-      manageMotor(CLOCKWISE, TOE_SENSOR);
+      manageMotor(TIGHTEN, HEEL_SENSOR);
       break;
     case STATE_CLOSED:
       setColor(0, 150, 0);
@@ -125,7 +125,7 @@ void handleStateMachine() {
       break;
     case STATE_LOOSENING: 
       setColor(150, 0, 150);
-      manageMotor(COUNTERCLOCKWISE, HEEL_SENSOR);
+      manageMotor(LOOSEN, TOE_SENSOR);
       break;
     case STATE_CONTROL:
       setColor(150, 0, 0);
@@ -162,7 +162,7 @@ void controlMotor(boolean dir, int power)
 }
 
 void stopMotor() {
-    controlMotor(CLOCKWISE, 0);  
+    controlMotor(TIGHTEN, 0);  
 }
 
 void readForceSensors() {
@@ -203,13 +203,13 @@ void manageControlState() {
   if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < 200)
     return;
     
-  if (forceSensorValues[HEEL_SENSOR] > toeForceThreshold) {
-    switchState(STATE, STATE_LOOSENING);
+  if (forceSensorValues[HEEL_SENSOR] > heelForceThreshold) {
+    switchState(STATE, STATE_TIGHTENING);
     return;
   }
   
-  if (forceSensorValues[TOE_SENSOR] > heelForceThreshold) {
-    switchState(STATE, STATE_TIGHTENING);
+  if (forceSensorValues[TOE_SENSOR] > toeForceThreshold) {
+    switchState(STATE, STATE_LOOSENING);
     return;
   }
 }
@@ -224,8 +224,8 @@ void manageMotor(int direction, int location) {
 }
 
 int getTargetStateForMotor(int location) {
-  if (checkSensorUnderThreshold(location, HEEL_SENSOR, toeForceThreshold) ||
-      checkSensorUnderThreshold(location, TOE_SENSOR, heelForceThreshold))
+  if (checkSensorUnderThreshold(location, HEEL_SENSOR, heelForceThreshold) ||
+      checkSensorUnderThreshold(location, TOE_SENSOR, toeForceThreshold))
     return STATE_CONTROL;
   if (checkSensorUnderThreshold(location, TONGUE_SENSOR, tongueForceThreshold))
     return STATE_INITIAL;
@@ -255,7 +255,7 @@ void manageReset() {
     switchState(STATE, STATE_INITIAL);
     return;
   }
-  manageMotor(COUNTERCLOCKWISE, MOTOR_MAX);
+  manageMotor(LOOSEN, MOTOR_MAX);
 }
 
 void checkTopTightness() {
