@@ -80,21 +80,30 @@ void setup() {
 }
 
 void loop() {
-  pixels.setPixelColor(0, pixels.Color(RED, GREEN, BLUE));
-  pixels.show(); // This sends the updated pixel color to the hardware.
-  delay(delayval); // Delay for a period of time (in milliseconds).
+  updateLight();
   
-  readHallSensor();
-  
-  // Make sure reading is not 0 (measurement made during PWM low phase
-  readCurrentSensor();
-  
-  readForceSensors();
+  readSensors();
   
   debugPrint();
   
-  // state machine handling
+  handleStateMachine();
   
+  delay(delayval); // Delay for a period of time (in milliseconds).
+}
+
+void updateLight() {
+  pixels.setPixelColor(0, pixels.Color(RED, GREEN, BLUE));
+  pixels.show(); // This sends the updated pixel color to the hardware.
+}
+
+void readSensors() {
+  readHallSensor();
+  // Make sure reading is not 0 (measurement made during PWM low phase
+  readCurrentSensor();
+  readForceSensors();
+}
+
+void handleStateMachine() { 
   checkHeelClosed();
   switch (STATE) {
     case STATE_INITIAL:
@@ -240,16 +249,6 @@ void readHeelSwitch() {
   switchValue = digitalRead(SWITCH_PIN);
 }
 
-void resetShoe() {
-  // TODO: loosen the shoe to max loosnes
-  if (STATE != STATE_INITIAL)
-    switchState(STATE, STATE_INITIAL);
-  stopMotor();
-  controlMotor(COUNTERCLOCKWISE, MOTOR_MAX);
-  delay(5000);
-  stopMotor();
-}
-
 void manageReset() {
   if (millis() - resetInitialTime > 3000) {
     stopMotor();
@@ -259,21 +258,11 @@ void manageReset() {
   manageMotor(COUNTERCLOCKWISE, MOTOR_MAX);
 }
 
-void tightenLaces() {
-  
-}
-
 void checkTopTightness() {
-  //erial.print("Checking top tightness, ");
-  //Serial.println(forceSensorValues[TONGUE_SENSOR]);
   if (forceSensorValues[TONGUE_SENSOR] > tongueForceThreshold) {
     switchState(STATE, STATE_CLOSED);
     stopMotor();
    }
-}
-
-void loosenLaces() {
-  
 }
 
 void setColor(int red, int green, int blue) {
