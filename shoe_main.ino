@@ -30,6 +30,11 @@
 #define TOE_SENSOR         0
 
 #define MOTOR_MAX          255
+#define CURRENT_MAX        90
+#define FORCE_SENSOR_FILTER  200
+
+#define GESTURE_DURATION   500
+#define RESET_TIME         3000
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      1
@@ -63,6 +68,7 @@ int currentValue = 0;
 unsigned long hallTime = 0;
 boolean hallCompare = false;
 unsigned long resetInitialTime = 0;
+boolean controlStateFlipped = false;
 
 int STATE = STATE_INITIAL;
 
@@ -155,7 +161,7 @@ void controlMotor(boolean dir, int power)
   digitalWrite(MOTOR_A, dir);
   digitalWrite(MOTOR_B, !dir);
   
-  if(power > 0 && power <= 255)
+  if(power > 0 && power <= MOTOR_MAX)
     analogWrite(MOTOR_EN, power);
   else
     analogWrite(MOTOR_EN, 0);
@@ -180,18 +186,21 @@ void checkHallSensor() {
   hallCompare = abs(hallSensorValue - hallSensorBaseValue) > hallSensorThreshold;
   if (hallCompare)
     compareHallValues();
-  else
-    hallTime = 0; 
+  else {
+    hallTime = 0;
+    controlStateFlipped = false;  
+  }
 }
 
 void compareHallValues() {
   hallTime = hallTime == 0 ? millis() : hallTime;
-  if (millis() - hallTime > 1000) {
+  if (millis() - hallTime > GESTURE_DURATION && !controlStateFlipped) {
     if (STATE == STATE_CLOSED)
       switchState(STATE, STATE_CONTROL);
     else
       switchState(STATE, STATE_CLOSED);
     hallTime = 0;
+    controlStateFlipped = true;
   }
 }
 
@@ -200,7 +209,7 @@ void manageControlState() {
   if (STATE != STATE_CONTROL)
     return;
   
-  if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < 200)
+  if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < FORCE_SENSOR_FILTER)
     return;
     
   if (forceSensorValues[HEEL_SENSOR] > heelForceThreshold) {
@@ -219,7 +228,7 @@ void manageMotor(int direction, int location) {
   if (targetState) {
     stopMotor();
     switchState(STATE, targetState);
-  } else if (currentValue < 90)
+  } else if (currentValue < CURRENT_MAX)
     controlMotor(direction, MOTOR_MAX); 
 }
 
@@ -250,7 +259,7 @@ void readHeelSwitch() {
 }
 
 void manageReset() {
-  if (millis() - resetInitialTime > 3000) {
+  if (millis() - resetInitialTime > RESET_TIME) {
     stopMotor();
     switchState(STATE, STATE_INITIAL);
     return;
