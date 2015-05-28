@@ -35,6 +35,7 @@
 
 #define GESTURE_DURATION   500
 #define RESET_TIME         3000
+#define CONTROL_STATE_MAX_TIME   15000
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      1
@@ -69,6 +70,7 @@ unsigned long hallTime = 0;
 boolean hallCompare = false;
 unsigned long resetInitialTime = 0;
 boolean controlStateFlipped = false;
+unsigned long controlTime = 0;
 
 int STATE = STATE_INITIAL;
 
@@ -93,14 +95,18 @@ void setUpHallSensor() {
     if (i > 1)
       hallSensorBaseValue = hallSensorBaseValue / 2;
     delay(delayval);
+    blinkLightSetup(i);
+  }
+  Serial.println("Hall sensor base value");
+  Serial.println(hallSensorBaseValue);
+}
+
+void blinkLightSetup(int i) {
     if (!(i % 50))
       setColor(150, 0, 0);  
     if (!(i % 101))
       setColor(0, 0, 150);
     updateLight();
-  }
-  Serial.println("Hall sensor base value");
-  Serial.println(hallSensorBaseValue);
 }
 
 void loop() {
@@ -213,8 +219,10 @@ void checkHallSensor() {
 void compareHallValues() {
   hallTime = hallTime == 0 ? millis() : hallTime;
   if (millis() - hallTime > GESTURE_DURATION && !controlStateFlipped) {
-    if (STATE == STATE_CLOSED)
+    if (STATE == STATE_CLOSED) {
       switchState(STATE, STATE_CONTROL);
+      controlTime = millis();
+    }
     else
       switchState(STATE, STATE_CLOSED);
     hallTime = 0;
@@ -226,6 +234,12 @@ void manageControlState() {
   checkHallSensor();
   if (STATE != STATE_CONTROL)
     return;
+    
+  if (millis() - controlTime > CONTROL_STATE_MAX_TIME) {
+    switchState(STATE, STATE_CLOSED);
+    controlTime = 0;
+    return;
+  }
   
   if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < FORCE_SENSOR_FILTER)
     return;
