@@ -54,7 +54,7 @@ int delayval = 10; // common delay value for the system
 
 // settings variables
 int hallSensorThreshold = HALL_SENSOR_THRESHOLD;
-int hallSensorBaseValue = HALL_SENSOR_BASE_VALUE;
+int hallSensorBaseValue = 0; // Will be set up for each shoe individually
 int toeForceThreshold = TOE_THRESHOLD;
 int heelForceThreshold = HEEL_THRESHOLD;
 int tongueForceThreshold = TOP_THRESHOLD;
@@ -83,6 +83,24 @@ void setup() {
   digitalWrite(MOTOR_B, LOW);
   
   Serial.begin(38400);
+  
+  setUpHallSensor();
+}
+
+void setUpHallSensor() {
+  for (int i = 0; i < 500; i++) {
+    hallSensorBaseValue += analogRead(HALL_SENSOR);
+    if (i > 1)
+      hallSensorBaseValue = hallSensorBaseValue / 2;
+    delay(delayval);
+    if (!(i % 50))
+      setColor(150, 0, 0);  
+    if (!(i % 101))
+      setColor(0, 0, 150);
+    updateLight();
+  }
+  Serial.println("Hall sensor base value");
+  Serial.println(hallSensorBaseValue);
 }
 
 void loop() {
