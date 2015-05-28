@@ -22,8 +22,8 @@
 #define STATE_CONTROL      24
 #define STATE_RESETTING    26
 
-#define TIGHTEN            0
-#define LOOSEN             1
+#define TIGHTEN            1
+#define LOOSEN             0
 
 #define HEEL_SENSOR        2
 #define TONGUE_SENSOR      1
