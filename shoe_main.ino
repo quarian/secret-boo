@@ -14,6 +14,7 @@
 #define FORCE_SENSOR_3     A4
 #define CURRENT_SENSOR     A5
 
+#define STATE_SETUP        19
 #define STATE_INITIAL      20
 #define STATE_INITIAL_TIGHTENING  25
 #define STATE_TIGHTENING   21
@@ -39,6 +40,10 @@
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      1
+
+#define PRODUCTION     0  // Change to 1 when flashing production shoes.
+                          // Changes the light behaviour such that only
+                          // shows light in configuration mode
 
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
@@ -72,7 +77,7 @@ unsigned long resetInitialTime = 0;
 boolean controlStateFlipped = false;
 unsigned long controlTime = 0;
 
-int STATE = STATE_INITIAL;
+int STATE = STATE_SETUP;
 
 void setup() {
   pixels.begin(); // This initializes the NeoPixel library.
@@ -87,6 +92,7 @@ void setup() {
   Serial.begin(38400);
   
   setUpHallSensor();
+  switchState(STATE, STATE_INITIAL);
 }
 
 void setUpHallSensor() {
@@ -146,11 +152,11 @@ void handleStateMachine() {
       checkTopTightness();
       break;
     case STATE_TIGHTENING:
-      setColor(150, 150, 0);
+      setColor(0, 150, 150);
       manageMotor(TIGHTEN, HEEL_SENSOR);
       break;
     case STATE_CLOSED:
-      setColor(0, 150, 0);
+      setColor(255, 0, 255);
       checkHallSensor();
       break;
     case STATE_LOOSENING: 
@@ -158,7 +164,7 @@ void handleStateMachine() {
       manageMotor(LOOSEN, TOE_SENSOR);
       break;
     case STATE_CONTROL:
-      setColor(150, 0, 0);
+      setColor(0, 0, 150);
       manageControlState();
       break;
     case STATE_RESETTING:
@@ -307,9 +313,16 @@ void checkTopTightness() {
 }
 
 void setColor(int red, int green, int blue) {
-  RED = red;
-  GREEN = green;
-  BLUE = blue;  
+  if (!PRODUCTION || STATE == STATE_CONTROL || STATE == STATE_SETUP ||
+      STATE == STATE_LOOSENING || STATE == STATE_TIGHTENING) {
+    RED = red;
+    GREEN = green;
+    BLUE = blue;
+  } else {
+    RED = 0;
+    GREEN = 0;
+    BLUE = 0;  
+  }
 }
 
 void switchState(int oldState, int newState) {
