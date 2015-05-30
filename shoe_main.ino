@@ -31,8 +31,8 @@
 #define TOE_SENSOR         0
 
 #define MOTOR_MAX          255
-#define CURRENT_MAX        90
-#define FORCE_SENSOR_FILTER  200
+#define CURRENT_MAX        70  // 90 for 25 RPM motor, 70 for 30 RPM motor
+#define FORCE_SENSOR_FILTER  350
 
 #define GESTURE_DURATION   500
 #define RESET_TIME         3000
@@ -271,8 +271,9 @@ void manageMotor(int direction, int location) {
 }
 
 int getTargetStateForMotor(int location) {
-  if (checkSensorUnderThreshold(location, HEEL_SENSOR, heelForceThreshold) ||
-      checkSensorUnderThreshold(location, TOE_SENSOR, toeForceThreshold))
+  if ((checkSensorUnderThreshold(location, HEEL_SENSOR, heelForceThreshold) ||
+      checkSensorUnderThreshold(location, TOE_SENSOR, toeForceThreshold)) &&
+      abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < FORCE_SENSOR_FILTER)
     return STATE_CONTROL;
   if (checkSensorUnderThreshold(location, TONGUE_SENSOR, tongueForceThreshold))
     return STATE_INITIAL;
@@ -306,7 +307,7 @@ void manageReset() {
 }
 
 void checkTopTightness() {
-  if (forceSensorValues[TONGUE_SENSOR] > tongueForceThreshold) {
+  if (forceSensorValues[TONGUE_SENSOR] > tongueForceThreshold || currentValue > CURRENT_MAX) {
     switchState(STATE, STATE_CLOSED);
     stopMotor();
    }

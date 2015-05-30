@@ -2,4 +2,4 @@
 
 #define TOP_THRESHOLD      700
 #define HEEL_THRESHOLD     800
-#define TOE_THRESHOLD      800
+#define TOE_THRESHOLD      650
