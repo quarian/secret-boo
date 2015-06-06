@@ -31,7 +31,7 @@
 #define TOE_SENSOR         0
 
 #define MOTOR_MAX          255
-#define CURRENT_MAX        70  // 90 for 25 RPM motor, 70 for 30 RPM motor
+#define CURRENT_MAX        90  // 90 for 25 RPM motor, 70 for 30 RPM motor
 #define FORCE_SENSOR_FILTER  350
 
 #define GESTURE_DURATION   500
@@ -41,7 +41,7 @@
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      1
 
-#define PRODUCTION     0  // Change to 1 when flashing production shoes.
+#define PRODUCTION     1  // Change to 1 when flashing production shoes.
                           // Changes the light behaviour such that only
                           // shows light in configuration mode
 
