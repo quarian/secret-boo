@@ -8,12 +8,14 @@
 #define MOTOR_EN           6
 #define LED_PIN            10
 
+// The analogue inputs mapped to the pins
 #define HALL_SENSOR        A0
 #define FORCE_SENSOR_1     A2
 #define FORCE_SENSOR_2     A3
 #define FORCE_SENSOR_3     A4
 #define CURRENT_SENSOR     A5
 
+// The state definitions
 #define STATE_SETUP        19
 #define STATE_INITIAL      20
 #define STATE_INITIAL_TIGHTENING  25
@@ -23,20 +25,29 @@
 #define STATE_CONTROL      24
 #define STATE_RESETTING    26
 
+// rotation directions for the motor
 #define TIGHTEN            1
 #define LOOSEN             0
 
+// Defining the sensors on the array of force sensor values
 #define HEEL_SENSOR        2
 #define TONGUE_SENSOR      1
 #define TOE_SENSOR         0
 
+// max currents and values used for the motor and preventing stalling
 #define MOTOR_MAX          255
 #define CURRENT_MAX        90  // 90 for 25 RPM motor, 70 for 30 RPM motor
+
+// the required difference betweem force snesors to filter out standing in
+// adjustment mode
 #define FORCE_SENSOR_FILTER  350
 
-#define GESTURE_DURATION   500
-#define RESET_TIME         3000
-#define CONTROL_STATE_MAX_TIME   15000
+// the various times that are present in the system
+#define GESTURE_DURATION   500  // reduce this if if you want the adjustment mode to trigger easier
+#define RESET_TIME         3000 // the time that the motor spins loose during reset
+#define CONTROL_STATE_MAX_TIME   15000  // the maximal amount of time in the control mode
+                                        // development challenge - make it so that the max time
+                                        // is only measured in adjustment mode or after an adjustment
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      1
@@ -58,7 +69,7 @@ int BLUE = 0;
 
 int delayval = 10; // common delay value for the system
 
-// settings variables
+// settings variables from the settings.h header file
 int hallSensorThreshold = HALL_SENSOR_THRESHOLD;
 int hallSensorBaseValue = 0; // Will be set up for each shoe individually
 int toeForceThreshold = TOE_THRESHOLD;
@@ -71,16 +82,21 @@ int hallSensorValue = 0;
 int currentSensorValue = 0;
 int switchValue = 0; // value == 1 when open, 0 when closed
 int currentValue = 0;
+
+// some control variables to preserve across iterations
 unsigned long hallTime = 0;
 boolean hallCompare = false;
 unsigned long resetInitialTime = 0;
 boolean controlStateFlipped = false;
 unsigned long controlTime = 0;
 
+// set the initial state
 int STATE = STATE_SETUP;
 
 void setup() {
   pixels.begin(); // This initializes the NeoPixel library.
+  
+  // pin modes
   pinMode(SWITCH_PIN, INPUT);
   pinMode(MOTOR_A, OUTPUT);
   pinMode(MOTOR_B, OUTPUT);
@@ -95,6 +111,7 @@ void setup() {
   switchState(STATE, STATE_INITIAL);
 }
 
+// sets the hall sensor base value for the shoe during setup
 void setUpHallSensor() {
   for (int i = 0; i < 500; i++) {
     hallSensorBaseValue += analogRead(HALL_SENSOR);
@@ -116,13 +133,13 @@ void blinkLightSetup(int i) {
 }
 
 void loop() {
-  updateLight();
+  updateLight();  // update the light if necessary
   
-  readSensors();
+  readSensors();  // read all the sensors
   
-  debugPrint();
+  debugPrint();   // print the relevant debug info
   
-  handleStateMachine();
+  handleStateMachine();  // check the state machine status
   
   delay(delayval); // Delay for a period of time (in milliseconds).
 }
@@ -139,6 +156,7 @@ void readSensors() {
   readForceSensors();
 }
 
+// simple state machine handling with a switch statement
 void handleStateMachine() { 
   checkHeelClosed();
   switch (STATE) {
@@ -176,6 +194,8 @@ void handleStateMachine() {
   }
 }
 
+// heel closed means that shoe is closed and should be secured around the user's
+// foot, otherwise the tightening mechanism should be unlocker
 void checkHeelClosed() {
   readHeelSwitch();
   if ((STATE == STATE_INITIAL || STATE == STATE_RESETTING) && !switchValue)
@@ -186,6 +206,7 @@ void checkHeelClosed() {
   }
 }
 
+// send messages to the motor
 void controlMotor(boolean dir, int power)
 {
   digitalWrite(MOTOR_A, dir);
@@ -211,6 +232,8 @@ void readHallSensor() {
   hallSensorValue = analogRead(HALL_SENSOR);
 }
 
+// hall sensors should read a difference bigger than the theshold for a given
+// time to change sraates between the control and closed states
 void checkHallSensor() {
   //Serial.println("Checking hall sensor");
   hallCompare = abs(hallSensorValue - hallSensorBaseValue) > hallSensorThreshold;
@@ -222,6 +245,8 @@ void checkHallSensor() {
   }
 }
 
+// the controlStateFlipped prevents the shoe from flickering between the control
+// and closed state if the sensors are kept close to each other
 void compareHallValues() {
   hallTime = hallTime == 0 ? millis() : hallTime;
   if (millis() - hallTime > GESTURE_DURATION && !controlStateFlipped) {
@@ -237,19 +262,25 @@ void compareHallValues() {
 }
 
 void manageControlState() {
+  // if we have exited the control state, for example because of heel system opening
+  // we don't do anything here
   checkHallSensor();
   if (STATE != STATE_CONTROL)
     return;
-    
+  // if we have maxed out control time exit the state  
   if (millis() - controlTime > CONTROL_STATE_MAX_TIME) {
     switchState(STATE, STATE_CLOSED);
     controlTime = 0;
     return;
   }
   
+  // if the user is standing up or not putting pressure on the heel or toe specifically
+  // don't control the shoe
   if  (abs(forceSensorValues[HEEL_SENSOR] - forceSensorValues[TOE_SENSOR]) < FORCE_SENSOR_FILTER)
     return;
     
+  // finally if either threshold is surpassed tighten or loosen the shoe
+  
   if (forceSensorValues[HEEL_SENSOR] > heelForceThreshold) {
     switchState(STATE, STATE_TIGHTENING);
     return;
@@ -270,6 +301,10 @@ void manageMotor(int direction, int location) {
     controlMotor(direction, MOTOR_MAX); 
 }
 
+// after the motor has been run the system can either be in the control mode (after tightening
+// or loosening) or in the initial mode (after a reset). If the adjustment mode max time is
+// reached while you are still tightening or loosening you will go through the control state
+// before returning to the normal closed state
 int getTargetStateForMotor(int location) {
   if ((checkSensorUnderThreshold(location, HEEL_SENSOR, heelForceThreshold) ||
       checkSensorUnderThreshold(location, TOE_SENSOR, toeForceThreshold)) &&
